@@ -1,10 +1,10 @@
 body {
   color: #292a31;
   font-family: "Noto Sans KR", sans-serif;
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1.6;
   margin: 0;
-  background-color: #f7f7fb;
+  background-color: #f4f9f8;
 }
 
 img {
@@ -12,7 +12,7 @@ img {
   width: 100%;
   max-width: 720px;
   height: auto;
-  margin: 20px auto;
+  margin: 28px auto;
   border-radius: 16px;
 }
 
@@ -25,17 +25,17 @@ footer {
 }
 
 header {
-  padding-top: 48px;
-  padding-bottom: 32px;
+  padding-top: 56px;
+  padding-bottom: 40px;
 }
 
 section {
-  margin-top: 56px;
+  margin-top: 64px;
 }
 
 footer {
-  padding-top: 32px;
-  padding-bottom: 32px;
+  padding-top: 40px;
+  padding-bottom: 40px;
 }
 
 nav {
@@ -51,21 +51,21 @@ nav a {
 }
 
 h1 {
-  font-size: 48px;
+  font-size: 44px;
   font-weight: 800;
   line-height: 1.2;
   letter-spacing: -0.02em;
 }
 
 h2 {
-  color: #635bff;
-  font-size: 32px;
+  color: #0f766e;
+  font-size: 30px;
   font-weight: 800;
   line-height: 1.3;
 }
 
 h3 {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.4;
 }
@@ -79,18 +79,23 @@ p {
   list-style-type: none;
   padding-left: 0;
   margin: 0;
-  display: flex;
-  align-items: stretch;
-  gap: 24px;
+
+  display: grid;
+
+  /* 들어갈 수 있는 만큼 열을 만들고,
+  카드 너비는 최소 260px부터 남은 공간까지 사용 */
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+
+  gap: 20px;
 }
 
 .feature-card {
-  flex: 1;
-  padding: 20px 24px;
+  min-width: 0;
+  padding: 24px 28px;
   margin-bottom: 0px;
-  border: 1px solid #deddea;
+  border: 1px solid #bfe3dc;
   border-radius: 12px;
-  background-color: #f4f3ff;
+  background-color: #e6f4f1;
 }
 
 *,
@@ -100,10 +105,10 @@ p {
 }
 
 .subscribe-card {
-  padding: 24px;
-  margin-top: 32px;
-  background-color: #f4f3ff;
-  border: 1px solid #deddea;
+  padding: 32px;
+  margin-top: 40px;
+  background-color: #e6f4f1;
+  border: 1px solid #bfe3dc;
   border-radius: 12px;
 }
 
@@ -126,7 +131,7 @@ button {
   border: 0;
   border-radius: 10px;
   color: #ffffff;
-  background-color: #635bff;
+  background-color: #0f766e;
   cursor: pointer;
   transition:
     background-color 0.2s,
@@ -139,15 +144,71 @@ button {
 }
 
 button:hover {
-  background-color: #4b43db;
+  background-color: #0b5c56;
 }
 
 button:focus,
 input:focus {
-  outline: 3px solid #b9b5ff;
+  outline: 3px solid #99d6cc;
   outline-offset: 2px;
 }
 
 button:active {
   transform: translateY(1px);
+}
+
+/* 웹페이지가 표시되는 가로 폭이 768px 이하일 때만 적용 */
+@media (max-width: 768px) {
+  body {
+    font-size: 15px;
+  }
+
+  header {
+    padding-top: 32px;
+    padding: 24px;
+  }
+
+  h1 {
+    font-size: 32px;
+  }
+
+  h2 {
+    font-size: 26px;
+  }
+
+  h3 {
+    font-size: 18px;
+  }
+
+  nav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  nav a {
+    /* 링크 글자 주변에도 누를 수 있는 여백 추가 */
+    padding: 8px 0;
+  }
+
+  /* 기능 카드를 한 열로 배치 */
+  .feature-list {
+    grid-template-columns: 1fr;
+  }
+
+  /* 이메일 입력창과 버튼도 한 열로 배치 */
+  form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  input,
+  button {
+    width: 100%;
+  }
+
+  /* 모바일에서도 버튼사이즈를 충분히 확보 */
+  button {
+    min-height: 48px;
+  }
 }
