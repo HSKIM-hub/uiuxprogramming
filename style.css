@@ -165,7 +165,7 @@ button:active {
 
   header {
     padding-top: 32px;
-    padding: 24px;
+    padding-bottom: 24px;
   }
 
   h1 {
@@ -211,4 +211,23 @@ button:active {
   button {
     min-height: 48px;
   }
+}
+
+#missionRequestMessage {
+  margin-top: 16px;
+  color: #555763;
+}
+
+#missionRequestMessage.is-success {
+  color: #245c3a;
+  background-color: #ceeeda;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+#missionRequestButton:disabled {
+  color: #ffffff;
+  background-color: #a8a8b2;
+  cursor: not-allowed;
 }
