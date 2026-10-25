@@ -161,6 +161,8 @@ const saveConfirm = document.querySelector("#save-confirm");
 function revokeSaveAgreement() {
   agreeCheck.checked = false;
   trainingFlow.hidden = true;
+  checkFlow.hidden = true;
+  resetCheck();
   handleAgreeChange();
   agreeCheck.focus();
 }
@@ -243,5 +245,93 @@ restartButton.addEventListener("click", () => {
   summaryScreen.textContent = "";
   summaryCount.textContent = "";
   summaryLevel.textContent = "";
+  checkFlow.hidden = true;
+  resetCheck();
   showStep(0);
+});
+
+const checkStart = document.querySelector("#check-start");
+const checkFlow = document.querySelector("#check-flow");
+const checkMission = document.querySelector("#check-mission");
+const checkForm = document.querySelector("#check-form");
+const linkInput = document.querySelector("#ui-link");
+const linkError = document.querySelector("#link-error");
+const checkItems = document.querySelectorAll('input[name="check-item"]');
+const checkSave = document.querySelector("#check-save");
+const checkResult = document.querySelector("#check-result");
+const resultTitle = document.querySelector("#result-title");
+const resultLink = document.querySelector("#result-link");
+const resultPassed = document.querySelector("#result-passed");
+const resultMissing = document.querySelector("#result-missing");
+const checkRetry = document.querySelector("#check-retry");
+
+checkStart.addEventListener("click", () => {
+  checkMission.textContent =
+    formData.screen + " · 미션 " + formData.count + "개 · 난이도 " + formData.level;
+  checkFlow.hidden = false;
+  checkFlow.scrollIntoView({ behavior: "smooth" });
+  linkInput.focus();
+});
+
+function validateLink() {
+  const value = linkInput.value.trim();
+  if (!value) {
+    linkError.textContent = "구성한 UI 페이지 링크를 입력해 주세요.";
+    linkInput.classList.add("has-error");
+    linkInput.focus();
+    return false;
+  }
+  if (!value.startsWith("https://")) {
+    linkError.textContent =
+      "링크는 https://로 시작해야 합니다. 주소창의 링크를 그대로 붙여 넣어 주세요.";
+    linkInput.classList.add("has-error");
+    linkInput.focus();
+    return false;
+  }
+  linkError.textContent = "";
+  linkInput.classList.remove("has-error");
+  return true;
+}
+
+checkSave.addEventListener("click", () => {
+  if (!validateLink()) return;
+
+  const passed = [];
+  const missing = [];
+  checkItems.forEach((item) => {
+    if (item.checked) {
+      passed.push(item.value);
+    } else {
+      missing.push(item.value);
+    }
+  });
+
+  resultTitle.textContent =
+    missing.length === 0
+      ? "모든 항목을 충족했어요"
+      : "보완할 항목이 " + missing.length + "개 있어요";
+  resultTitle.classList.toggle("is-perfect", missing.length === 0);
+  resultLink.href = linkInput.value.trim();
+  resultLink.textContent = linkInput.value.trim();
+  resultPassed.textContent = passed.length > 0 ? passed.join(", ") : "없음";
+  resultMissing.textContent = missing.length > 0 ? missing.join(", ") : "없음";
+  checkForm.hidden = true;
+  checkResult.hidden = false;
+  checkFlow.scrollIntoView({ behavior: "smooth" });
+});
+
+function resetCheck() {
+  linkInput.value = "";
+  linkError.textContent = "";
+  linkInput.classList.remove("has-error");
+  checkItems.forEach((item) => {
+    item.checked = false;
+  });
+  checkForm.hidden = false;
+  checkResult.hidden = true;
+}
+
+checkRetry.addEventListener("click", () => {
+  resetCheck();
+  linkInput.focus();
 });

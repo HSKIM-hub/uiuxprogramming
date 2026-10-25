@@ -189,6 +189,7 @@ button:active {
 
 .agree-row input {
   flex: 0 0 auto;
+  width: auto;
   margin-top: 6px;
 }
 
@@ -362,6 +363,59 @@ body.dark .training-flow {
   border-color: #2d2e38;
 }
 
+.check-flow {
+  padding: 24px;
+  border: 1px solid #bfe3dc;
+  border-radius: 24px;
+  background-color: #ffffff;
+}
+.check-flow .error-message {
+  min-height: 24px;
+  color: #9d243d;
+  font-weight: 700;
+}
+.check-flow #ui-link {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+}
+.check-flow #ui-link.has-error {
+  border-color: #9d243d;
+}
+.check-flow input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: auto;
+  accent-color: #0f766e;
+}
+.check-flow fieldset label {
+  display: block;
+}
+.check-flow .summary-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #bfe3dc;
+}
+.check-flow .summary-list span {
+  flex-shrink: 0;
+}
+.check-flow #result-link {
+  overflow-wrap: anywhere;
+}
+.check-flow #result-title.is-perfect {
+  color: #0f766e;
+}
+.check-flow .step-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+body.dark .check-flow {
+  background-color: #50515f;
+  border-color: #2d2e38;
+}
+
 /* 웹페이지가 표시되는 가로 폭이 768px 이하일 때만 적용 */
 @media (max-width: 768px) {
   body {
@@ -430,6 +484,9 @@ body.dark .training-flow {
   .training-flow {
     padding: 20px;
   }
+  .check-flow {
+    padding: 20px;
+  }
   #save-dialog .dialog-actions {
     flex-direction: column-reverse;
   }
@@ -442,7 +499,7 @@ body.dark .training-flow {
   .training-flow .step-actions button {
     width: 100%;
   }
-  .training-flow input[type="checkdob"],
+  .training-flow input[type="checkbox"],
   .training-flow input[type="radio"] {
     width: auto;
   }

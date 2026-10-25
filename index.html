@@ -78,7 +78,7 @@
             aria-controls="placement-check"
             data-target="#placement-check"
           >
-            배치 체크
+            UI 구성 체크
           </button>
 
           <button
@@ -121,8 +121,11 @@
           aria-labelledby="tab-placement"
           hidden
         >
-          <h3>배치 체크리스트</h3>
-          <p>여백, 정렬, 글자 크기를 체크리스트로 스스로 점검합니다.</p>
+          <h3>UI 구성 체크리스트</h3>
+          <p>
+            여백·정렬 같은 배치와 오류 안내·반응형 같은 사용성을 체크리스트로
+            스스로 점검합니다.
+          </p>
         </div>
         <div
           id="practice-record"
@@ -229,15 +232,23 @@
           />
           <output id="count-value" for="count-range">1개</output>
           <label>
-            <input id="level-option" type="checkbox" />난이도 변경하기 (기본 보통)
+            <input id="level-option" type="checkbox" />난이도 변경하기 (기본
+            보통)
           </label>
           <fieldset id="level-options" hidden>
             <legend>난이도</legend>
             <label><input type="radio" name="level" value="쉬움" />쉬움</label>
             <label
-              ><input type="radio" name="level" value="보통" checked />보통</label
+              ><input
+                type="radio"
+                name="level"
+                value="보통"
+                checked
+              />보통</label
             >
-            <label><input type="radio" name="level" value="어려움" />어려움</label>
+            <label
+              ><input type="radio" name="level" value="어려움" />어려움</label
+            >
           </fieldset>
           <div class="step-actions">
             <button id="option-prev" type="button">이전</button>
@@ -251,12 +262,8 @@
             <div>
               <span>연습할 화면</span><strong id="summary-screen"></strong>
             </div>
-            <div>
-              <span>미션 수</span><strong id="summary-count"></strong>
-            </div>
-            <div>
-              <span>난이도</span><strong id="summary-level"></strong>
-            </div>
+            <div><span>미션 수</span><strong id="summary-count"></strong></div>
+            <div><span>난이도</span><strong id="summary-level"></strong></div>
           </div>
           <div class="step-actions">
             <button id="summary-prev" type="button">수정하기</button>
@@ -268,10 +275,107 @@
           <h3>훈련 설정이 완료되었습니다.</h3>
           <p>
             설정한 조건으로 오늘의 미션이 준비됩니다. 필요하면 다시 설정할 수
-            있습니다.
+            있습니다. 미션을 마쳤다면 UI 구성 점검으로 결과를 남겨 보세요.
           </p>
-          <button id="restart-button" type="button">다시 설정하기</button>
+          <div class="step-actions">
+            <button id="restart-button" type="button">다시 설정하기</button>
+            <button id="check-start" type="button">UI 구성 점검하러 가기</button>
+          </div>
         </section>
+      </section>
+
+      <section id="check-flow" class="check-flow" hidden>
+        <h2>UI 구성 체크리스트</h2>
+        <p id="check-mission"></p>
+
+        <div id="check-form">
+          <label for="ui-link">구성한 UI 페이지 링크</label>
+          <input
+            id="ui-link"
+            type="url"
+            placeholder="예: https://www..."
+            aria-describedby="link-error"
+          />
+          <p id="link-error" class="error-message" aria-live="polite"></p>
+          <fieldset>
+            <legend>배치</legend>
+            <label
+              ><input type="checkbox" name="check-item" value="여백" />요소 사이
+              여백이 일정하다</label
+            >
+            <label
+              ><input type="checkbox" name="check-item" value="정렬" />같은 줄의
+              요소가 정렬선에 맞는다</label
+            >
+            <label
+              ><input
+                type="checkbox"
+                name="check-item"
+                value="글자 크기"
+              />제목과 본문의 글자 크기가 구분된다</label
+            >
+            <label
+              ><input
+                type="checkbox"
+                name="check-item"
+                value="버튼 크기"
+              />버튼과 입력창이 누르기 충분히 크다</label
+            >
+          </fieldset>
+          <fieldset>
+            <legend>사용성</legend>
+            <label
+              ><input
+                type="checkbox"
+                name="check-item"
+                value="안내 문구"
+              />레이블과 버튼 문구만 보고 무엇을 할지 알 수 있다</label
+            >
+            <label
+              ><input
+                type="checkbox"
+                name="check-item"
+                value="오류 안내"
+              />입력이 비었거나 틀리면 무엇을 어떻게 고칠지 알려 준다</label
+            >
+            <label
+              ><input
+                type="checkbox"
+                name="check-item"
+                value="상태 표시"
+              />선택·비활성·포커스 상태가 눈에 띄게 구분된다</label
+            >
+            <label
+              ><input
+                type="checkbox"
+                name="check-item"
+                value="반응형"
+              />모바일에서도 버튼과 입력창이 밀리거나 겹치지 않는다</label
+            >
+          </fieldset>
+          <div class="step-actions">
+            <button id="check-save" type="button">점검 결과 기록하기</button>
+          </div>
+        </div>
+
+        <div id="check-result" hidden>
+          <h3 id="result-title"></h3>
+          <div class="summary-list">
+            <div>
+              <span>UI 링크</span
+              ><a id="result-link" target="_blank" rel="noopener"></a>
+            </div>
+            <div>
+              <span>충족 항목</span><strong id="result-passed"></strong>
+            </div>
+            <div>
+              <span>보완할 항목</span><strong id="result-missing"></strong>
+            </div>
+          </div>
+          <div class="step-actions">
+            <button id="check-retry" type="button">다시 점검하기</button>
+          </div>
+        </div>
       </section>
 
       <section id="subscribe" class="subscribe-card">
