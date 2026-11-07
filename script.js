@@ -1,337 +1,420 @@
-const serviceName = "Daily:UI";
-let isMissionRequested = false;
-let submitCount = 0;
+const storageKey = "rehear-training-plans-v1";
+const form = document.querySelector("#plan-form");
+const steps = [...document.querySelectorAll(".flow-step")];
+const progressItems = [...document.querySelectorAll(".progress-item")];
+const titleInput = document.querySelector("#presentation-title");
+const titleError = document.querySelector("#title-error");
+const titleField = document.querySelector("#title-field");
+const titleHelp = document.querySelector("#title-help");
+const titleCount = document.querySelector("#title-count");
+const nicknameInput = document.querySelector("#nickname");
+const nicknameCount = document.querySelector("#nickname-count");
+const qnaOption = document.querySelector("#qna-option");
+const qnaOptions = document.querySelector("#qna-options");
+const qnaInputs = document.querySelectorAll('input[name="qna-count"]');
+const planList = document.querySelector("#plan-list");
+const emptyState = document.querySelector("#empty-state");
+const planCount = document.querySelector("#plan-count");
+const archiveStatus = document.querySelector("#archive-status");
+const planDialog = document.querySelector("#plan-dialog");
 
-function makeMissionRequestMessage(email, requested) {
-  if (requested == true) {
-    return (
-      email + "로 미션 신청이 완료되었습니다. 매일 새로운 미션이 전달됩니다."
-    );
+const saveButton = document.querySelector("#save-plan");
+const submitStatus = document.querySelector("#submit-status");
+const completeMessage = document.querySelector("#complete-message");
+let isSubmitting = false;
+const forceSaveFailure = new URLSearchParams(location.search).has("save-error");
+
+function readPlans() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    if (!Array.isArray(stored)) return [];
+    return stored
+      .filter(
+        (plan) =>
+          plan && typeof plan.id === "string" && typeof plan.title === "string",
+      )
+      .map((plan) => ({
+        id: plan.id,
+        title: plan.title.slice(0, 60),
+        nickname:
+          typeof plan.nickname === "string" ? plan.nickname.slice(0, 10) : "",
+        duration: ["1", "3", "5"].includes(plan.duration)
+          ? plan.duration
+          : "3",
+        qna: plan.qna === true,
+        qnaCount: ["쉬움", "보통", "어려움"].includes(plan.qnaCount)
+          ? plan.qnaCount
+          : "보통",
+        cancelled: plan.cancelled === true,
+        createdAt: typeof plan.createdAt === "string" ? plan.createdAt : "",
+      }));
+  } catch {
+    return [];
   }
-
-  return "이메일을 입력한 뒤 신청해주세요.";
 }
 
-const missionRequestForm = document.querySelector("#mission-form");
-const emailInput = document.querySelector("#email");
-const missionRequestButton = document.querySelector("#missionRequestButton");
-const missionRequestMessage = document.querySelector("#missionRequestMessage");
+let plans = readPlans();
+let currentStep = 1;
 
-function handleMissionRequest(event) {
+function savePlans() {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(plans));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function showStep(number) {
+  currentStep = number;
+  steps.forEach((step) => {
+    step.hidden = Number(step.dataset.step) !== number;
+  });
+  progressItems.forEach((item, index) => {
+    const isCurrent = index === number - 1;
+    item.classList.toggle("is-current", isCurrent);
+    item.classList.toggle("is-done", index < number - 1);
+    if (isCurrent && number <= 3) item.setAttribute("aria-current", "step");
+    else item.removeAttribute("aria-current");
+  });
+  const heading = steps[number - 1].querySelector("h3");
+  heading.tabIndex = -1;
+  heading.focus({ preventScroll: true });
+  document
+    .querySelector("#planner")
+    .scrollIntoView({ block: "start", behavior: "smooth" });
+}
+
+function showTitleError(message) {
+  titleInput.setAttribute("aria-invalid", "true");
+  titleError.textContent = message;
+  titleField.classList.remove("is-valid");
+  titleField.classList.add("has-error");
+  return false;
+}
+
+function clearTitleError() {
+  titleInput.removeAttribute("aria-invalid");
+  titleError.textContent = "";
+  titleField.classList.remove("has-error");
+  updateTitleExperience();
+}
+
+function updateTitleExperience() {
+  const length = titleInput.value.length;
+  const valid = titleInput.value.trim().length >= 2;
+  const hasError = titleInput.getAttribute("aria-invalid") === "true";
+
+  titleCount.textContent = `${length} / 60자`;
+  titleField.classList.toggle("has-error", hasError);
+  titleField.classList.toggle("is-valid", valid && !hasError);
+  titleHelp.textContent = hasError
+    ? "화면 이름 입력 조건을 다시 확인해 주세요."
+    : valid
+      ? "입력 조건을 충족했습니다."
+      : "2자 이상 60자 이하로 입력해 주세요.";
+}
+
+function validateTitle() {
+  const title = titleInput.value.trim();
+  if (!title) {
+    titleError.textContent = "연습할 화면을 입력해 주세요.";
+    titleInput.setAttribute("aria-invalid", "true");
+    updateTitleExperience();
+    titleInput.focus();
+    return false;
+  }
+  if (title.length < 2) {
+    titleError.textContent = "연습할 화면은 2자 이상 입력해 주세요.";
+    titleInput.setAttribute("aria-invalid", "true");
+    updateTitleExperience();
+    titleInput.focus();
+    return false;
+  }
+  titleError.textContent = "";
+  titleInput.removeAttribute("aria-invalid");
+  updateTitleExperience();
+  return true;
+}
+
+function getFormValues() {
+  return {
+    title: titleInput.value.trim(),
+    nickname: nicknameInput.value.trim(),
+    duration: form.querySelector('input[name="duration"]:checked').value,
+    qna: qnaOption.checked,
+    qnaCount: form.querySelector('input[name="qna-count"]:checked').value,
+  };
+}
+
+function qnaText(plan) {
+  return plan.qna ? plan.qnaCount : "보통 (기본)";
+}
+
+function updateSummary() {
+  const values = getFormValues();
+  document.querySelector("#summary-title").textContent = values.title;
+  document.querySelector("#summary-nickname").textContent =
+    values.nickname || "입력 안 함";
+  document.querySelector("#summary-duration").textContent =
+    `${values.duration}개`;
+  document.querySelector("#summary-qna").textContent = qnaText(values);
+}
+
+function setSubmitState(state, message) {
+  isSubmitting = state === "loading";
+  form.setAttribute("aria-busy", String(isSubmitting));
+  saveButton.disabled = isSubmitting;
+  saveButton.textContent = isSubmitting ? "저장하는 중..." : "설정 완료하기";
+  submitStatus.textContent = message;
+  submitStatus.classList.toggle("is-success", state === "success");
+  submitStatus.classList.toggle("has-error", state === "error");
+}
+
+titleInput.addEventListener("input", () => {
+  if (titleInput.getAttribute("aria-invalid") === "true") {
+    validateTitle();
+  } else {
+    updateTitleExperience();
+  }
+});
+updateTitleExperience();
+
+nicknameInput.addEventListener("input", () => {
+  nicknameCount.textContent = `${nicknameInput.value.length} / 10자`;
+});
+
+function syncQnaFields() {
+  const open = qnaOption.checked;
+  qnaOption.setAttribute("aria-expanded", String(open));
+  qnaOptions.hidden = !open;
+  qnaInputs.forEach((input) => {
+    input.disabled = !open;
+  });
+}
+
+qnaOption.addEventListener("change", syncQnaFields);
+syncQnaFields();
+
+document.querySelector("#info-next").addEventListener("click", () => {
+  if (validateTitle()) showStep(2);
+});
+document
+  .querySelector("#option-prev")
+  .addEventListener("click", () => showStep(1));
+document.querySelector("#option-next").addEventListener("click", () => {
+  updateSummary();
+  showStep(3);
+});
+document
+  .querySelector("#edit-info")
+  .addEventListener("click", () => showStep(1));
+document
+  .querySelector("#edit-options")
+  .addEventListener("click", () => showStep(2));
+
+function wait(milliseconds) {
+  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+}
+
+async function persistPlan(plan) {
+  await wait(600);
+
+  if (forceSaveFailure) {
+    throw new Error("수업용 저장 실패");
+  }
+
+  plans.unshift(plan);
+  if (!savePlans()) {
+    plans.shift();
+    throw new Error("브라우저 저장 실패");
+  }
+}
+
+form.addEventListener("submit", (event) => {
   event.preventDefault();
 
-  const missionEmail = emailInput.value.trim();
+  if (currentStep === 1) {
+    if (validateTitle()) showStep(2);
+    return;
+  }
+  if (currentStep !== 3 || isSubmitting) return;
 
-  if (missionEmail === "") {
-    missionRequestMessage.textContent = "이메일을 입력한 뒤 신청해주세요.";
-    emailInput.focus();
+  if (!validateTitle()) {
+    showStep(1);
+    titleInput.focus();
     return;
   }
 
-  isMissionRequested = true;
-  submitCount += 1;
-
-  missionRequestMessage.textContent = makeMissionRequestMessage(
-    missionEmail,
-    isMissionRequested,
-  );
-
-  missionRequestMessage.classList.add("is-success");
-  missionRequestButton.textContent = "신청 완료";
-  missionRequestButton.disabled = true;
-}
-
-missionRequestForm.addEventListener("submit", handleMissionRequest);
-
-const themeButton = document.querySelector("#themeButton");
-const nicknameInput = document.querySelector("#nickname");
-const nicknameCount = document.querySelector("#nicknameCount");
-const agreeCheck = document.querySelector("#agreeCheck");
-const agreeMessage = document.querySelector("#agreeMessage");
-const startButton = document.querySelector("#startButton");
-
-function handleThemeClick(event) {
-  const isDark = document.body.classList.toggle("dark");
-
-  themeButton.textContent = isDark
-    ? "라이트 테마로 바꾸기"
-    : "다크 테마로 바꾸기";
-}
-
-themeButton.addEventListener("click", handleThemeClick);
-
-function handleNickNameInput() {
-  const maxLength = nicknameInput.maxLength;
-  const currentLength = Math.min(maxLength, nicknameInput.value.length);
-  nicknameCount.textContent = currentLength + " / 10";
-}
-
-nicknameInput.addEventListener("input", handleNickNameInput);
-
-function handleAgreeChange() {
-  const agreed = agreeCheck.checked;
-
-  startButton.disabled = !agreed;
-  agreeMessage.textContent = agreed
-    ? "훈련 설정을 시작할 수 있습니다"
-    : "동의 후 훈련 설정을 시작할 수 있습니다.";
-
-  if (agreed) {
-    agreeMessage.classList.add("is-ready");
-  } else {
-    agreeMessage.classList.remove("is-ready");
-  }
-}
-
-agreeCheck.addEventListener("change", handleAgreeChange);
-
-const tabs = document.querySelectorAll(".tab");
-const panels = document.querySelectorAll(".panel");
-
-function resetTabsAndPanels() {
-  tabs.forEach(function (tab) {
-    tab.classList.remove("is-active");
-    tab.setAttribute("aria-selected", "false");
-  });
-  panels.forEach(function (panel) {
-    panel.classList.remove("is-active");
-    panel.hidden = true;
-  });
-}
-
-function activateTab(clickedTab) {
-  const targetSelector = clickedTab.dataset.target;
-  const targetPanel = document.querySelector(targetSelector);
-
-  clickedTab.classList.add("is-active");
-  clickedTab.setAttribute("aria-selected", "true");
-
-  targetPanel.classList.add("is-active");
-  targetPanel.hidden = false;
-}
-
-function handleTabClick(event) {
-  resetTabsAndPanels();
-  activateTab(event.currentTarget);
-}
-
-tabs.forEach(function (tab) {
-  tab.addEventListener("click", handleTabClick);
-});
-
-const trainingFlow = document.querySelector("#training-flow");
-const flowSteps = trainingFlow.querySelectorAll(".step");
-const progressItems = trainingFlow.querySelectorAll(".progress_item");
-const screenInput = document.querySelector("#screen-name");
-const screenError = document.querySelector("#screen-error");
-const screenNext = document.querySelector("#screen-next");
-const countRange = document.querySelector("#count-range");
-const countValue = document.querySelector("#count-value");
-const levelOption = document.querySelector("#level-option");
-const levelOptions = document.querySelector("#level-options");
-const optionPrev = document.querySelector("#option-prev");
-const optionNext = document.querySelector("#option-next");
-const summaryPrev = document.querySelector("#summary-prev");
-const finishButton = document.querySelector("#finish-button");
-const restartButton = document.querySelector("#restart-button");
-const summaryScreen = document.querySelector("#summary-screen");
-const summaryCount = document.querySelector("#summary-count");
-const summaryLevel = document.querySelector("#summary-level");
-
-const formData = {
-  screen: "",
-  count: "1",
-  customLevel: false,
-  level: "보통",
-};
-
-function showStep(index) {
-  flowSteps.forEach((step, i) => {
-    step.hidden = i !== index;
-  });
-  progressItems.forEach((item, i) => {
-    item.classList.toggle("is-active", i === index);
-  });
-}
-
-const saveDialog = document.querySelector("#save-dialog");
-const saveCancel = document.querySelector("#save-cancel");
-const saveConfirm = document.querySelector("#save-confirm");
-
-function revokeSaveAgreement() {
-  agreeCheck.checked = false;
-  trainingFlow.hidden = true;
-  checkFlow.hidden = true;
-  resetCheck();
-  handleAgreeChange();
-  agreeCheck.focus();
-}
-
-startButton.addEventListener("click", () => {
-  if (!agreeCheck.checked) return;
-  saveDialog.showModal();
-});
-saveCancel.addEventListener("click", () => {
-  saveDialog.close();
-  revokeSaveAgreement();
-});
-saveDialog.addEventListener("cancel", revokeSaveAgreement);
-saveConfirm.addEventListener("click", () => {
-  if (!agreeCheck.checked) return;
-  saveDialog.close();
-  trainingFlow.hidden = false;
-  showStep(0);
-  trainingFlow.scrollIntoView({ behavior: "smooth" });
-  screenInput.focus();
-});
-
-function validateScreen() {
-  const value = screenInput.value.trim();
-  if (!value) {
-    screenError.textContent = "연습할 화면을 입력해 주세요.";
-    screenInput.classList.add("has-error");
-    screenInput.focus();
-    return false;
-  }
-  screenError.textContent = "";
-  screenInput.classList.remove("has-error");
-  formData.screen = value;
-  return true;
-}
-
-screenNext.addEventListener("click", () => {
-  if (!validateScreen()) return;
-  showStep(1);
-});
-
-countRange.addEventListener("input", () => {
-  countValue.value = countRange.value + "개";
-});
-
-levelOption.addEventListener("change", () => {
-  levelOptions.hidden = !levelOption.checked;
-});
-
-optionPrev.addEventListener("click", () => showStep(0));
-optionNext.addEventListener("click", () => {
-  formData.count = countRange.value;
-  formData.customLevel = levelOption.checked;
-  const level = document.querySelector('input[name="level"]:checked');
-  formData.level = formData.customLevel ? level.value : "보통";
-  summaryScreen.textContent = formData.screen;
-  summaryCount.textContent = formData.count + "개";
-  summaryLevel.textContent = formData.customLevel
-    ? formData.level
-    : formData.level + " (기본)";
-  showStep(2);
-});
-
-summaryPrev.addEventListener("click", () => showStep(1));
-finishButton.addEventListener("click", () => showStep(3));
-
-restartButton.addEventListener("click", () => {
-  formData.screen = "";
-  formData.count = "1";
-  formData.customLevel = false;
-  formData.level = "보통";
-  screenInput.value = "";
-  screenError.textContent = "";
-  screenInput.classList.remove("has-error");
-  countRange.value = "1";
-  countValue.value = "1개";
-  levelOption.checked = false;
-  levelOptions.hidden = true;
-  document.querySelector('input[name="level"][value="보통"]').checked = true;
-  summaryScreen.textContent = "";
-  summaryCount.textContent = "";
-  summaryLevel.textContent = "";
-  checkFlow.hidden = true;
-  resetCheck();
-  showStep(0);
-});
-
-const checkStart = document.querySelector("#check-start");
-const checkFlow = document.querySelector("#check-flow");
-const checkMission = document.querySelector("#check-mission");
-const checkForm = document.querySelector("#check-form");
-const linkInput = document.querySelector("#ui-link");
-const linkError = document.querySelector("#link-error");
-const checkItems = document.querySelectorAll('input[name="check-item"]');
-const checkSave = document.querySelector("#check-save");
-const checkResult = document.querySelector("#check-result");
-const resultTitle = document.querySelector("#result-title");
-const resultLink = document.querySelector("#result-link");
-const resultPassed = document.querySelector("#result-passed");
-const resultMissing = document.querySelector("#result-missing");
-const checkRetry = document.querySelector("#check-retry");
-
-checkStart.addEventListener("click", () => {
-  checkMission.textContent =
-    formData.screen + " · 미션 " + formData.count + "개 · 난이도 " + formData.level;
-  checkFlow.hidden = false;
-  checkFlow.scrollIntoView({ behavior: "smooth" });
-  linkInput.focus();
-});
-
-function validateLink() {
-  const value = linkInput.value.trim();
-  if (!value) {
-    linkError.textContent = "구성한 UI 페이지 링크를 입력해 주세요.";
-    linkInput.classList.add("has-error");
-    linkInput.focus();
-    return false;
-  }
-  if (!value.startsWith("https://")) {
-    linkError.textContent =
-      "링크는 https://로 시작해야 합니다. 주소창의 링크를 그대로 붙여 넣어 주세요.";
-    linkInput.classList.add("has-error");
-    linkInput.focus();
-    return false;
-  }
-  linkError.textContent = "";
-  linkInput.classList.remove("has-error");
-  return true;
-}
-
-checkSave.addEventListener("click", () => {
-  if (!validateLink()) return;
-
-  const passed = [];
-  const missing = [];
-  checkItems.forEach((item) => {
-    if (item.checked) {
-      passed.push(item.value);
-    } else {
-      missing.push(item.value);
+  setSubmitState("loading", "입력한 훈련 설정을 저장하고 있습니다.");
+  window.setTimeout(() => {
+    if (!saveCurrentPlan()) {
+      setSubmitState(
+        "error",
+        "저장하지 못했습니다. 입력 내용을 확인하고 다시 시도해 주세요.",
+      );
+      return;
     }
-  });
-
-  resultTitle.textContent =
-    missing.length === 0
-      ? "모든 항목을 충족했어요"
-      : "보완할 항목이 " + missing.length + "개 있어요";
-  resultTitle.classList.toggle("is-perfect", missing.length === 0);
-  resultLink.href = linkInput.value.trim();
-  resultLink.textContent = linkInput.value.trim();
-  resultPassed.textContent = passed.length > 0 ? passed.join(", ") : "없음";
-  resultMissing.textContent = missing.length > 0 ? missing.join(", ") : "없음";
-  checkForm.hidden = true;
-  checkResult.hidden = false;
-  checkFlow.scrollIntoView({ behavior: "smooth" });
+    setSubmitState("success", "훈련 설정 저장이 완료되었습니다.");
+    showStep(4);
+  }, 600);
 });
 
-function resetCheck() {
-  linkInput.value = "";
-  linkError.textContent = "";
-  linkInput.classList.remove("has-error");
-  checkItems.forEach((item) => {
-    item.checked = false;
-  });
-  checkForm.hidden = false;
-  checkResult.hidden = true;
+function saveCurrentPlan() {
+  const plan = {
+    id:
+      typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random()}`,
+    ...getFormValues(),
+    cancelled: false,
+    createdAt: new Date().toISOString(),
+  };
+
+  plans.unshift(plan);
+  if (!savePlans()) {
+    plans.shift();
+    return false;
+  }
+
+  renderPlans();
+  archiveStatus.textContent = `‘${plan.title}’ 훈련 설정을 저장했습니다.`;
+  completeMessage.textContent = `‘${plan.title}’ 훈련 설정을 내 기록에서 다시 열어볼 수 있습니다.`;
+  return true;
 }
 
-checkRetry.addEventListener("click", () => {
-  resetCheck();
-  linkInput.focus();
+document.querySelector("#restart-button").addEventListener("click", () => {
+  form.reset();
+  syncQnaFields();
+
+  nicknameCount.textContent = "0 / 10자";
+  titleCount.textContent = "0 / 60자";
+  titleHelp.textContent = "2자 이상 60자 이하로 입력해 주세요.";
+  titleError.textContent = "";
+
+  titleInput.removeAttribute("aria-invalid");
+  titleField.classList.remove("is-valid", "has-error");
+  updateTitleExperience();
+  setSubmitState("idle", "");
+  showStep(1);
+  titleInput.focus();
 });
+
+function createText(tag, className, content) {
+  const element = document.createElement(tag);
+  element.className = className;
+  element.textContent = content;
+  return element;
+}
+
+function renderPlans() {
+  planList.replaceChildren();
+  emptyState.hidden = plans.length !== 0;
+  planList.hidden = plans.length === 0;
+  const activeCount = plans.filter((plan) => !plan.cancelled).length;
+  planCount.textContent = String(activeCount);
+  planCount.setAttribute("aria-label", `진행 중인 훈련 설정 ${activeCount}개`);
+
+  plans.forEach((plan) => {
+    const card = document.createElement("li");
+    card.className = `plan-card${plan.cancelled ? " is-cancelled" : ""}`;
+    const top = document.createElement("div");
+    top.className = "plan-card-top";
+    top.append(
+      createText("span", "plan-state", plan.cancelled ? "취소됨" : "저장됨"),
+    );
+    const date = new Date(plan.createdAt);
+    if (!Number.isNaN(date.getTime())) {
+      top.append(
+        createText(
+          "time",
+          "plan-date",
+          new Intl.DateTimeFormat("ko-KR", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }).format(date),
+        ),
+      );
+    }
+    card.append(top);
+    card.append(createText("h3", "plan-title", plan.title));
+    card.append(
+      createText(
+        "p",
+        "plan-meta",
+        `미션 ${plan.duration}개 · 난이도 ${qnaText(plan)}`,
+      ),
+    );
+    const actions = document.createElement("div");
+    actions.className = "plan-actions";
+    const openButton = createText(
+      "button",
+      "button button-secondary",
+      "내용 보기",
+    );
+    openButton.type = "button";
+    openButton.dataset.action = "open";
+    openButton.dataset.id = plan.id;
+    const toggleButton = createText(
+      "button",
+      "button button-text",
+      plan.cancelled ? "취소 되돌리기" : "설정 취소하기",
+    );
+    toggleButton.type = "button";
+    toggleButton.dataset.action = "toggle";
+    toggleButton.dataset.id = plan.id;
+    actions.append(openButton, toggleButton);
+    card.append(actions);
+    planList.append(card);
+  });
+}
+
+planList.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+  const plan = plans.find((item) => item.id === button.dataset.id);
+  if (!plan) return;
+
+  if (button.dataset.action === "open") {
+    document.querySelector("#dialog-title").textContent = plan.title;
+    document.querySelector("#dialog-status").textContent = plan.cancelled
+      ? "취소된 훈련 설정입니다."
+      : "저장된 훈련 설정입니다.";
+    document.querySelector("#dialog-nickname").textContent =
+      plan.nickname || "입력 안 함";
+    document.querySelector("#dialog-duration").textContent =
+      `${plan.duration}개`;
+    document.querySelector("#dialog-qna").textContent = qnaText(plan);
+    planDialog.showModal();
+    return;
+  }
+
+  const wasCancelled = plan.cancelled;
+  plan.cancelled = !wasCancelled;
+  const persisted = savePlans();
+  renderPlans();
+  archiveStatus.textContent = persisted
+    ? `‘${plan.title}’ 훈련 설정을 ${wasCancelled ? "다시 사용할 수 있습니다" : "취소했습니다"}.`
+    : "상태를 현재 화면에서 바꿨지만, 브라우저 저장 공간을 사용할 수 없어 새로고침하면 사라질 수 있습니다.";
+  const nextButton = [
+    ...planList.querySelectorAll('button[data-action="toggle"]'),
+  ].find((item) => item.dataset.id === plan.id);
+  nextButton?.focus();
+});
+
+document
+  .querySelector("#dialog-close")
+  .addEventListener("click", () => planDialog.close());
+document
+  .querySelector("#dialog-done")
+  .addEventListener("click", () => planDialog.close());
+
+const themeButton = document.querySelector("#theme-button");
+themeButton.addEventListener("click", () => {
+  const dark = document.body.classList.toggle("dark");
+  themeButton.textContent = dark ? "라이트 모드" : "다크 모드";
+  themeButton.setAttribute("aria-pressed", String(dark));
+});
+
+renderPlans();
