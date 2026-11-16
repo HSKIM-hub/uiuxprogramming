@@ -23,10 +23,23 @@
         <a class="brand" href="#top" aria-label="Daily:UI 맨 위로"
           ><strong>Daily:UI</strong></a
         >
-        <nav aria-label="주요 메뉴">
-          <a href="#about">이용 방법</a>
-          <a href="#planner">훈련 설정</a>
-          <a href="#archive">훈련 기록</a>
+
+        <button
+          id="menu-toggle"
+          class="menu-toggle"
+          type="button"
+          aria-controls="main-nav"
+          aria-expanded="false"
+        >
+          메뉴 열기
+        </button>
+
+        <nav id="main-nav" class="main-nav" aria-label="주요 메뉴">
+          <ul>
+            <li><a href="#about">이용 방법</a></li>
+            <li><a href="#planner">훈련 설정</a></li>
+            <li><a href="#archive">훈련 기록</a></li>
+          </ul>
         </nav>
         <button
           id="theme-button"
@@ -377,6 +390,34 @@
             브라우저에만 보관됩니다.
           </p>
         </div>
+
+        <div class="plan-filters" role="group" aria-label="훈련 기록 표시 범위">
+          <button
+            class="filter-button is-active"
+            type="button"
+            data-filter="all"
+            aria-pressed="true"
+          >
+            전체
+          </button>
+          <button
+            class="filter-button"
+            type="button"
+            data-filter="active"
+            aria-pressed="false"
+          >
+            저장됨
+          </button>
+          <button
+            class="filter-button"
+            type="button"
+            data-filter="cancelled"
+            aria-pressed="false"
+          >
+            취소됨
+          </button>
+        </div>
+
         <p
           id="archive-status"
           class="archive-status"

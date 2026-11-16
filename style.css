@@ -101,22 +101,49 @@ p {
   width: 124px;
   height: auto;
 }
-.site-header nav {
+
+.main-nav {
+  margin-left: auto;
+}
+.main-nav ul {
   display: flex;
   align-items: center;
   gap: 28px;
-  margin-left: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
-.site-header nav a {
+
+.main-nav a {
   color: var(--muted);
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
 }
-.site-header nav a:hover {
+
+.main-nav a:hover {
   color: var(--blue);
 }
+
+.main-nav a.is-current {
+  color: var(--blue);
+  background: var(--lavender);
+  box-shadow: inset 0 -3px 0 var(--blue);
+}
+
+.menu-toggle {
+  display: none;
+  min-height: 40px;
+  margin-left: auto;
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+}
+
 .theme-button {
   flex: none;
   min-height: 40px;
@@ -665,6 +692,28 @@ p {
   font-size: 15px;
   vertical-align: middle;
 }
+
+.plan-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.filter-button {
+  min-height: 42px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+}
+.filter-button.is-active {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: #fff;
+}
+
 .archive-status {
   margin: 0 0 18px;
   color: var(--blue);
@@ -900,15 +949,33 @@ body.dark .brand img {
   .brand img {
     width: 112px;
   }
-  .site-header nav {
-    order: 3;
-    justify-content: space-between;
-    width: 100%;
-    gap: 9px;
-    padding-top: 9px;
+
+  .menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
-  .site-header nav a {
-    font-size: 12px;
+  .site-header .main-nav {
+    display: none;
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+  }
+  .site-header .main-nav.is-open {
+    display: block;
+  }
+  .main-nav ul {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding-top: 10px;
+  }
+  .main-nav a {
+    display: block;
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 9px;
+    font-size: 14px;
   }
   .theme-button {
     min-height: 35px;
