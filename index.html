@@ -18,6 +18,7 @@
     <script src="script.js?v=20260925-2" defer></script>
   </head>
   <body>
+    <a class="skip-link" href="#top"> 본문 바로가기 </a>
     <header class="site-header">
       <div class="container header-inner">
         <a class="brand" href="#top" aria-label="Daily:UI 맨 위로"
@@ -52,7 +53,7 @@
       </div>
     </header>
 
-    <main id="top">
+    <main id="top" tabindex="-1">
       <section class="hero container" aria-labelledby="hero-title">
         <div class="hero-copy">
           <p class="eyebrow">하루에 한번 UI 구성 훈련</p>
@@ -77,6 +78,7 @@
             width="549"
             height="364"
           />
+          <figcaption>Daily:UI 서비스 콘셉트 이미지</figcaption>
         </figure>
       </section>
 
@@ -159,7 +161,7 @@
                   <p id="title-help" class="field-help">
                     화면을 구분할 수 있도록 2자 이상 입력해 주세요.
                   </p>
-                  <p id="title-count" class="field-count" aria-live="polite">
+                  <p id="title-count" class="field-count" >
                     0 / 60자
                   </p>
                 </div>
@@ -448,7 +450,7 @@
           id="dialog-close"
           class="icon-button"
           type="button"
-          aria-label="닫기"
+          aria-label="설정 상세 닫기"
         >
           ×
         </button>

@@ -329,6 +329,10 @@ function updateCurrentNav() {
       link.removeAttribute("aria-current");
     }
   });
+
+  const currentLink = document.querySelector('.main-nav a[aria-current="page"]');
+  const pageName = currentLink ? currentLink.textContent.trim() : "홈";
+  document.title = pageName + " | Daily:UI";
 }
 
 window.addEventListener("hashchange", updateCurrentNav);
@@ -339,6 +343,15 @@ menuToggle.addEventListener("click", () => {
 
   menuToggle.textContent = isOpen ? "메뉴 닫기" : "메뉴 열기";
   menuToggle.setAttribute("aria-expanded", String(isOpen));
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || !mainNav.classList.contains("is-open")) return;
+
+  mainNav.classList.remove("is-open");
+  menuToggle.textContent = "메뉴 열기";
+  menuToggle.setAttribute("aria-expanded", "false");
+  menuToggle.focus();
 });
 
 navLinks.forEach((link) => {
@@ -376,7 +389,9 @@ function renderPlans() {
     emptyDescription.textContent = filtered
       ? "다른 상태를 선택해 보세요."
       : "첫 훈련 설정을 마치면 이곳에서 다시 볼 수 있습니다.";
-    emptyAction.hidden = filtered;
+    emptyAction.hidden = false;
+    emptyAction.textContent = filtered ? "전체 보기" : "훈련 설정하러 가기";
+    emptyAction.href = filtered ? "#archive" : "#planner";
   }
 
   planCount.textContent = String(visiblePlans.length);
@@ -450,7 +465,22 @@ filterButtons.forEach((button) => {
       item.setAttribute("aria-pressed", String(selected));
     });
     renderPlans();
+
+    const count = getVisiblePlans().length;
+    const filterName = button.textContent.trim();
+    archiveStatus.textContent =
+      count > 0
+        ? `${filterName} 훈련 설정 ${count}개가 표시됩니다.`
+        : `${filterName} 훈련 설정이 없습니다. 다른 조건을 선택해 보세요.`;
   });
+});
+
+emptyState.querySelector("a").addEventListener("click", (event) => {
+  if (currentFilter === "all") return;
+  event.preventDefault();
+  const allButton = document.querySelector('[data-filter="all"]');
+  allButton.click();
+  allButton.focus();
 });
 
 planList.addEventListener("click", (event) => {
@@ -483,7 +513,10 @@ planList.addEventListener("click", (event) => {
   const nextButton = [
     ...planList.querySelectorAll('button[data-action="toggle"]'),
   ].find((item) => item.dataset.id === plan.id);
-  nextButton?.focus();
+  const selectedFilter = document.querySelector(
+    '.filter-button[aria-pressed="true"]',
+  );
+  (nextButton || selectedFilter)?.focus();
 });
 
 document
